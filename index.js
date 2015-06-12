@@ -1,7 +1,8 @@
 window.addEventListener('load', function main1(){
   var ulOfGames = document.querySelector('.existing-games');
   var createGameButton = document.querySelector('.createGame');
-  var ws0;
+  var ws0;    // веб сокет
+  var myId;  // id полученной игры
   function XRHSend(method, url, sendData, headers, func4){
     var i;
     var request;
@@ -65,29 +66,34 @@ window.addEventListener('load', function main1(){
   //               СОЗДАНИЕ ИГРЫ
   function crGame(){
     var crGameReq;
-    var myId;
+
     createGameButton.disabled = true;
   // Обработка клика по кнопке новая игра
-
+  // отправить запрос на создание новой игры, получить свой айди
     try {
-      crGameReq = new XMLHttpRequest();
-      crGameReq.open('POST', gameUrls.newGame);
-      crGameReq.addEventListener('redystatechange', function startGameResponse(message){
-        if (message.readyState === 4){
-
-          myId = JSON.parse(crGameReq.response).yourid;
+     crGameReq = new XMLHttpRequest();
+     crGameReq.open('POST', gameUrls.newGame);
+      crGameReq.addEventListener('readystatechange', function startGameResponse(message){
+        if (crGameReq.readyState === 4){
+         console.log(crGameReq);
+          myId = JSON.parse(crGameReq.response).yourId;
           console.log('ID МММММММММ' + myId);
+          //Отправить запрос на присоединиться к своей игре на сервер
+          ws0.send(JSON.stringify({'register': myId}));
+          // if(ws0.response){console.log(ws0.response)};
         }
       });
       crGameReq.send();
-    }
-    catch (err){
-      console.log(err);
+   }
+   catch (err){
+     console.log(err);
 
     }
   }
 
+
   createGameButton.addEventListener('click', crGame);
+
 
 
 });
