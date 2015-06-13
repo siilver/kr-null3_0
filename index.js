@@ -8,7 +8,42 @@ window.addEventListener('load', function main1(){
   var ws0;    // веб сокет
   var myId;  // id полученной игры
   var myUserId;
+  var state = {
+    moves:[],
+    hod:0
+    // side
+    //gameId
+    // playerId
+  };
   var mainGameField = document.querySelector('.mainGame');
+// Отрисовка поля
+
+  function XHRSend(method, url, sendData, headers, func4){
+    var i;
+    var h = [];
+    var request;
+    request = new XMLHttpRequest();
+    request.open(method, url);
+    if (headers) {
+      for (i = 0; i < headers.length; i++) {
+        request.setRequestHeader(headers[i][0], headers[i][1]);
+      }
+      //request.setRequestHeader(headers[i])
+    }
+    if (func4){
+      request.addEventListener('readystatechange', function(){
+        if (request.readyState === 4 ){
+          func4();
+        }
+      });
+
+    }
+    if (sendData){
+      request.send(sendData);
+    } else {
+      request.send();
+    }
+  }
 // Отрисовка поля
   function drawField(){
     var i;
@@ -26,39 +61,15 @@ window.addEventListener('load', function main1(){
     rowField.appendChild(cellField);
     }
   }
-
-  function XHRSend(method, url, sendData, headers, func4){
-    var i;
-    var request;
-    request = new XMLHttpRequest();
-    request.open(method, url);
-    if (headers) {
-      for (i = 0; i < headers.length; i++) {
-        request.setRequestHeader(headers[i][0], headers[i][1]);
-      }
-    }
-
-    if (func4){
-      request.addEventListener('readystatechange', func4());
-
-    }
-    if (sendData){
-      request.send(sendData);
-    } else {
-      request.send();
-    }
-    if (request.readyState === 4){
-      func4();
-    }
-  }
   // Добавление новых игр с веб сокета
   function addNewGameToUl(gameId){
     var newLi;
     newLi = document.createElement('li');
     newLi.id = gameId;
     newLi.textContent = gameId;
-    newLi.addEventListener('click', function lilistener(ev){
+    newLi.addEventListener('click', function liListener(ev){
       var regToGame; // J1
+      myId = gameId;
       ws0.send(JSON.stringify({'register': gameId}));
 
     });
@@ -75,6 +86,7 @@ window.addEventListener('load', function main1(){
   // функция обработки события веб сокeта ws0
   function ws0listener(event){
     var fromWs;
+    var requestFormStart;
     fromWs = JSON.parse(event.data);
     console.log(fromWs);
     // Добавить li W1
@@ -101,6 +113,10 @@ window.addEventListener('load', function main1(){
       //statusMessageSecond.textContent = 'Ожидаем начала игры';
       h2Field.textContent = 'Ожидаем начала игры';
       ulOfGames.style.display = 'none';
+      requestFormStart = JSON.stringify({'player': myUserId, 'game': myId});
+      XHRSend('POST', gameUrls.gameReady, requestFormStart, [['Content-Type', 'application/json']], function(request){
+        console.log('DDDDDDDDDDDDDDDDDDDDDDDDDDDD====DDDDDDDDDDDDDDDDDDDDDDDD');
+      } );
 
     }
   }
@@ -139,6 +155,7 @@ window.addEventListener('load', function main1(){
     }
   }
   createGameButton.addEventListener('click', crGame);
+
 
 
 
