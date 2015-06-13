@@ -11,6 +11,7 @@ window.addEventListener('load', function main1(){
   var createGameButton = document.querySelector('.createGame');
   var statusMessageFirst = document.querySelector('.startGame .status-message h2');
   var statusMessageSecond = document.querySelector('.mainGame .status-message');
+  var startGameDiv = document.querySelector('.startGame');
   var h2Field = document.querySelector('h2');
   var ws0;    // веб сокет
   // var myId;  // id полученной игры
@@ -35,7 +36,7 @@ window.addEventListener('load', function main1(){
     if (func4){
       request.addEventListener('readystatechange', function(){
         if (request.readyState === 4 ){
-          func4();
+          func4(request);
         }
       });
 
@@ -119,11 +120,20 @@ window.addEventListener('load', function main1(){
       ulOfGames.style.display = 'none';
       requestFormStart = JSON.stringify({'player': state.playerId, 'game': state.gameId});
       XHRSend('POST', gameUrls.gameReady, requestFormStart, [['Content-Type', 'application/json']], function(request){
-        console.log('DDDDDDDDDDDDDDDDDDDDDDDDDDDD====DDDDDDDDDDDDDDDDDDDDDDDD');
-        //console.log(request);
+        if(request.status===200) {
+          console.log('DDDDDDDDDDDDDDDDDDDDDDDDDDDD====DDDDDDDDDDDDDDDDDDDDDDDD');
+          state.side  = JSON.parse(request.responseText).side;
+          startGameDiv.style.display = 'none';
+          mainGameField.style.display = 'inline-block';
+        } else if (request.status===410){
+          statusMessageFirst.textContent = 'Ошибка старта игры: другой игрок не ответил';
+        } else {
+          statusMessageFirst.textContent = 'Неизвестная ошибка старта игры';
+        }
       } );
 
     }
+    //f (fromWs.er)
   }
   ws0 = new WebSocket(gameUrls.list);
   ws0.addEventListener('message', ws0listener);
@@ -160,7 +170,36 @@ window.addEventListener('load', function main1(){
 
     }
   }
+  function clicker(e){
+    var c;
+    var m;
+    var reqData;
+    var cells = document.querySelectorAll('.cell');
+    if (e.target.classList.contains('cell')){
+      var cellIndex = Array.prototype.indexOf.call(document.querySelectorAll('.cell'), e.target);
+      reqData = JSON.stringify({'move':(cellIndex+1)});
+      XHRSend('POST', gameUrls.move, reqData, ([['Content-Type', 'application/json'], ['Game-ID', state.gameId], ['Player-ID', state.playerId]]), function(request){
+          if(request.status===200){
+            state.moves.push(JSON.parse(request.responseText).move);
+            for(c=0; c<100;c++){
+                cells[c].classList.remove('x');
+                cells[c].classList.remove('o');
+            }
+            for (m=0; m<state.moves; m++){
+              if (m%2===0){
+                cells[(state.moves[m]-1)].classList.add('x');
+              } else {
+                cells[(state.moves[m]-1)].classList.add('0');
+              }
+
+            }
+          }
+        });
+
+    }
+  }
   createGameButton.addEventListener('click', crGame);
+  gameField.addEventListener('click', clicker);
 
 
 
