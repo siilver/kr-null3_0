@@ -1,9 +1,33 @@
 window.addEventListener('load', function main1(){
+  var gameField = document.querySelector('.field');
   var ulOfGames = document.querySelector('.existing-games');
   var createGameButton = document.querySelector('.createGame');
+  var statusMessageFirst = document.querySelector('.startGame .status-message h2');
+  var statusMessageSecond = document.querySelector('.mainGame .status-message');
+  var h2Field = document.querySelector('h2');
   var ws0;    // веб сокет
   var myId;  // id полученной игры
-  function XRHSend(method, url, sendData, headers, func4){
+  var myUserId;
+  var mainGameField = document.querySelector('.mainGame');
+// Отрисовка поля
+  function drawField(){
+    var i;
+    var cellField;
+    var rowField;
+    //mainGameField.style.display='inline-block';
+    for(i = 100; i>0; i--){
+      if (i % 10 === 0){
+        rowField = document.createElement('div');
+        rowField.classList.add('row');
+        gameField.appendChild(rowField);
+      }
+    cellField = document.createElement('div');
+    cellField.classList.add('cell');
+    rowField.appendChild(cellField);
+    }
+  }
+
+  function XHRSend(method, url, sendData, headers, func4){
     var i;
     var request;
     request = new XMLHttpRequest();
@@ -33,6 +57,11 @@ window.addEventListener('load', function main1(){
     newLi = document.createElement('li');
     newLi.id = gameId;
     newLi.textContent = gameId;
+    newLi.addEventListener('click', function lilistener(ev){
+      var regToGame; // J1
+      ws0.send(JSON.stringify({'register': gameId}));
+
+    });
     ulOfGames.appendChild(newLi);
     console.log('добавлен ' + gameId);
   }
@@ -48,15 +77,31 @@ window.addEventListener('load', function main1(){
     var fromWs;
     fromWs = JSON.parse(event.data);
     console.log(fromWs);
-    // Добавить li
+    // Добавить li W1
     if (fromWs.action === 'add'){
      // console.log(event.data);
       addNewGameToUl(fromWs.id);
     }
-    // Удалить li
+    // Удалить li W2
     if (fromWs.action === 'remove'){
       // console.log(event.data);
       removeNewGamefromUl(fromWs.id);
+    }
+    // W3 Обработка приглашения
+    if (fromWs.action === 'startGame'){
+       console.log(event.data);
+    }
+    //if(event){console.log(event);}
+
+    if (fromWs.action === 'startGame'){
+      myUserId = fromWs.id;
+      console.log('YAAAA ' + myUserId);
+      drawField();
+      createGameButton.disabled = true;
+      //statusMessageSecond.textContent = 'Ожидаем начала игры';
+      h2Field.textContent = 'Ожидаем начала игры';
+      ulOfGames.style.display = 'none';
+
     }
   }
   ws0 = new WebSocket(gameUrls.list);
@@ -66,13 +111,14 @@ window.addEventListener('load', function main1(){
   //               СОЗДАНИЕ ИГРЫ
   function crGame(){
     var crGameReq;
-
+//    var statusMessageFirst = document.querySelector('.startGame > status-message');
     createGameButton.disabled = true;
   // Обработка клика по кнопке новая игра
-  // отправить запрос на создание новой игры, получить свой айди
+  // отправить запрос на создание новой игры, получить свой айди C2,C3
     try {
      crGameReq = new XMLHttpRequest();
-     crGameReq.open('POST', gameUrls.newGame);
+     //crGameReq.open('POST', (gameUrls.newGame));
+      crGameReq.open('POST', gameUrls.newGame);
       crGameReq.addEventListener('readystatechange', function startGameResponse(message){
         if (crGameReq.readyState === 4){
          console.log(crGameReq);
@@ -80,18 +126,18 @@ window.addEventListener('load', function main1(){
           console.log('ID МММММММММ' + myId);
           //Отправить запрос на присоединиться к своей игре на сервер
           ws0.send(JSON.stringify({'register': myId}));
-          // if(ws0.response){console.log(ws0.response)};
+         // ws0.send({'register': myId});
         }
       });
       crGameReq.send();
    }
    catch (err){
-     console.log(err);
+     console.log('UUUUUUUUUUUUU' + err);
+     statusMessageFirst.textContent = 'Ошибка создания игры';
+     createGameButton.disabled = false;
 
     }
   }
-
-
   createGameButton.addEventListener('click', crGame);
 
 
