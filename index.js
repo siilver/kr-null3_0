@@ -1,3 +1,10 @@
+var state = {
+  moves:[],
+  hod:0
+  // side
+  //gameId
+  // playerId
+};
 window.addEventListener('load', function main1(){
   var gameField = document.querySelector('.field');
   var ulOfGames = document.querySelector('.existing-games');
@@ -6,18 +13,12 @@ window.addEventListener('load', function main1(){
   var statusMessageSecond = document.querySelector('.mainGame .status-message');
   var h2Field = document.querySelector('h2');
   var ws0;    // веб сокет
-  var myId;  // id полученной игры
-  var myUserId;
-  var state = {
-    moves:[],
-    hod:0
-    // side
-    //gameId
-    // playerId
-  };
-  var mainGameField = document.querySelector('.mainGame');
-// Отрисовка поля
+  // var myId;  // id полученной игры
+//  var myUserId;
 
+  var mainGameField = document.querySelector('.mainGame');
+
+  // Функция запроса
   function XHRSend(method, url, sendData, headers, func4){
     var i;
     var h = [];
@@ -30,6 +31,7 @@ window.addEventListener('load', function main1(){
       }
       //request.setRequestHeader(headers[i])
     }
+    console.log(request);
     if (func4){
       request.addEventListener('readystatechange', function(){
         if (request.readyState === 4 ){
@@ -69,8 +71,10 @@ window.addEventListener('load', function main1(){
     newLi.textContent = gameId;
     newLi.addEventListener('click', function liListener(ev){
       var regToGame; // J1
-      myId = gameId;
-      ws0.send(JSON.stringify({'register': gameId}));
+      state.gameId = ev.target.textContent;
+      console.log('GGGGAAAAME' + state.gameId);
+
+      ws0.send(JSON.stringify({'register': state.gameId}));
 
     });
     ulOfGames.appendChild(newLi);
@@ -103,19 +107,20 @@ window.addEventListener('load', function main1(){
     if (fromWs.action === 'startGame'){
        console.log(event.data);
     }
-    //if(event){console.log(event);}
-
+    // N2 Обработка события startgame
     if (fromWs.action === 'startGame'){
-      myUserId = fromWs.id;
-      console.log('YAAAA ' + myUserId);
+      //myUserId = fromWs.id;
+      state.playerId = fromWs.id;
+      console.log('YAAAA ' + state.playerId);
       drawField();
       createGameButton.disabled = true;
       //statusMessageSecond.textContent = 'Ожидаем начала игры';
       h2Field.textContent = 'Ожидаем начала игры';
       ulOfGames.style.display = 'none';
-      requestFormStart = JSON.stringify({'player': myUserId, 'game': myId});
+      requestFormStart = JSON.stringify({'player': state.playerId, 'game': state.gameId});
       XHRSend('POST', gameUrls.gameReady, requestFormStart, [['Content-Type', 'application/json']], function(request){
         console.log('DDDDDDDDDDDDDDDDDDDDDDDDDDDD====DDDDDDDDDDDDDDDDDDDDDDDD');
+        //console.log(request);
       } );
 
     }
@@ -138,11 +143,12 @@ window.addEventListener('load', function main1(){
       crGameReq.addEventListener('readystatechange', function startGameResponse(message){
         if (crGameReq.readyState === 4){
          console.log(crGameReq);
-          myId = JSON.parse(crGameReq.response).yourId;
-          console.log('ID МММММММММ' + myId);
+          state.gameId = JSON.parse(crGameReq.response).yourId;
+          console.log('ID МММММММММ' + state.gameId);
           //Отправить запрос на присоединиться к своей игре на сервер
-          ws0.send(JSON.stringify({'register': myId}));
-         // ws0.send({'register': myId});
+          ws0.send(JSON.stringify({'register': state.gameId}));
+          state.playerId = state.gameId;
+         // ws0.send({'register': state.gameId});
         }
       });
       crGameReq.send();
